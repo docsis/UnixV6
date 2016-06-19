@@ -4,12 +4,12 @@ Generate doc
 	nroff -ms /usr/doc/start/start > /dev/lp0
 
 
-# 
-[Installing Unix v6 (PDP-11) on SIMH]()
+# Install & load 
+[Installing Unix v6 (PDP-11) on SIMH](http://gunkies.org/wiki/Installing_Unix_v6_(PDP-11)_on_SIMH#Booting_up_to_single_user_mode)
+
 
 	# STTY -LCASE
-
-	http://gunkies.org/wiki/Installing_Unix_v6_(PDP-11)_on_SIMH#Booting_up_to_single_user_mode)
+	
 
 	sim>do s1.txt 
 
