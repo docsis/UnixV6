@@ -221,6 +221,29 @@ int advance(int noden, char *dir)
 	return 0;
 }
 
+void savefile(char *fnew, int noden)
+{
+	uint16_t *pp;
+	uint16_t *blk;
+	int i=0;
+	FILE *f;
+	int size = inodep(noden)->i_size1;
+	char *buf;
+
+	printf("size %d mod %o\n", size, inodep(noden)->i_mode);
+	blk = inodep(noden)->i_addr;
+
+	pp = blockp(inodep(noden)->i_addr[0]);
+	f = fopen(fnew, "w");
+
+	while (size > 0) {
+		buf = blockp(pp[i++]);		
+		fwrite(buf, 1, 512, f);
+		size -= 512;
+	}
+	fclose(f);
+}
+
 void dfile(char *path)
 {
 	char *p = &path[1];
@@ -244,13 +267,13 @@ void dfile(char *path)
 			break;
 	} while (1);
 
-	printf("%s", blockp(inodep(noden)->i_addr[0]));
-	
+	savefile("./dfile", noden);
 }
 
 int main(int argc, char *argv[])
 {
-	char fname[] = "/usr/sys/conf/l.s";
+	//char fname[] = "/usr/sys/conf/l.s";
+	char fname[] = "/unix";
 
 	loadrk("rk0");
 	printf("-----------\n");
@@ -260,7 +283,7 @@ int main(int argc, char *argv[])
 	//dinode();
 
 	printf("-----------\n");
-	prdir(0, 0);
+	//prdir(0, 0);
 
 	printf("----------- %s\n", fname);
 	dfile(fname);
