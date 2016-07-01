@@ -16,6 +16,13 @@ struct insrtab {
 	uint16_t type;
 };
 
+struct symtab {
+	uint16_t addr;
+	char type;
+	char *pname;
+};
+
+static struct symtab stab[400];
 static uint16_t pc = 0466;
 static uint16_t fbuf[30720/2];
 static uint16_t fhead[8];
@@ -199,10 +206,6 @@ char *opd_str(uint16_t pc, uint16_t mode, uint16_t imm, char *buf, int jmp)
 void loadfile(char *name) 
 {
 	FILE *f;
-	struct insrtab *tab;
-	uint16_t ins;
-	int ilen;
-	char opdbuf[64];
 
 	f = fopen(name, "r");
 	if (!f) {
@@ -214,12 +217,34 @@ void loadfile(char *name)
 	fread(fhead, 1, 16, f);
 	fread(fbuf, 1, sizeof(fbuf), f);
 	
-	for (; pc<512*8; ) {
+	fclose(f);
+}
+
+char *getsym(uint16_t addr)
+{
+	struct symtab *p = stab;
+
+	while (p->addr < addr) {
+		p++;
+	}
+	if (addr == p->addr)
+		return p->pname;
+
+	return "";
+}
+void disa(void)
+{
+	struct insrtab *tab;
+	uint16_t ins;
+	int ilen;
+	char opdbuf[128];
+
+	for (; pc<061066; ) {
 		ins = fbuf[pc/2];
 		tab = getop(ins);
 		ilen = inslen(tab, ins);
 
-		printf("%o: %06o ", pc, ins, tab->str);
+		printf("%-8s %o: %06o ", getsym(pc), pc, ins);
 #if 0
 		if (ilen >= 2)
 			printf("%06o ", fbuf[pc/2 + 1]);
@@ -236,7 +261,7 @@ void loadfile(char *name)
 				printf("%o", pc + 2 + 2*(ins & 077));
 		}
 		if (tab->type & OP_JSR) {
-			printf("%s,", rname[(ins & 0700)>>6],  pc + 2 + 2*(ins & 077));
+			printf("%s,", rname[(ins & 0700)>>6]);
 		}
 		if (tab->type & OP_DUB) {
 			printf("%s,", opd_str(pc, (ins & 07700) >> 6, fbuf[pc/2 + 1], opdbuf, 0));
@@ -244,7 +269,7 @@ void loadfile(char *name)
 		}
 		if (tab->type & OP_SGL) {
 			/* */
-			if (tab->type & OP_JMP)
+			if (tab->type & (OP_JMP | OP_JSR))
 				printf("%s", opd_str(pc, ins & 077, fbuf[pc/2 + 1], opdbuf, 1));
 			else
 				printf("%s", opd_str(pc, ins & 077, fbuf[pc/2 + 1], opdbuf, 0));
@@ -255,9 +280,46 @@ void loadfile(char *name)
 
 }
 
+void loadsym(char *fname) 
+{
+	FILE *f;
+	char line[128];
+	struct symtab *p = stab;
+
+	f = fopen(fname, "r");
+	if (!f) {
+		perror("file");
+		exit(1);
+	}
+
+	while (fgets(line, sizeof(line), f) != NULL) {
+		line[strlen(line)-1] = '\0';
+		p->addr = strtol(line, NULL, 8);
+		p->type = line[6];
+		p->pname = strdup(&line[8]);
+		p++;
+	}
+	
+	fclose(f);
+}
+
+void dsym(void)
+{
+	struct symtab *p = stab;
+
+	while (p->addr) {
+		printf("%o %c %s\n", p->addr, p->type, p->pname);
+		p++;
+	}
+
+}
+
 int main(int argc, char *argv[])
 {
 	loadfile("dfile");
+	loadsym("unix.nm");
+	//dsym();
+	disa();
 
 	return 0;
 }

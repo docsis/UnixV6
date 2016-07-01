@@ -1,4 +1,3 @@
-# nm unix | sort
 000466T trap
 000560T call
 000672T _display
@@ -305,6 +304,3 @@
 123104B _end
 123104B _end
 140000A _u
-losef
-# 
-

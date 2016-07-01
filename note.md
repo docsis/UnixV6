@@ -4,7 +4,7 @@ chapter1
 * DR/SR 177570; 
 * e -v virtual address; d -a -c -m -o -d -h
 * tmrk copies blocks from tape to disk; ltap primary boot program;
-* 
+*  
 
 Setting up UNIX
 ===============
