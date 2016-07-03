@@ -8,6 +8,9 @@
 #define OP_JSR 0x04
 #define OP_BR  0x08
 #define OP_JMP 0x10
+#define OP_SOB 0x20
+
+char *getsym(uint16_t addr);
 
 struct insrtab {
 	uint16_t op;
@@ -46,7 +49,7 @@ struct insrtab itab[] = {
 {0072000,0177000,"ASH", OP_DUB},
 {0073000,0177000,"ASHC", OP_DUB},
 {0074000,0177000,"XOR", OP_DUB},
-{0077000,0177000,"SOB", OP_DUB},
+{0077000,0177000,"SOB", OP_SOB},
 
 /* single */
 {0000300,0077700,"SWAB", OP_SGL},
@@ -150,6 +153,9 @@ char *rname[] = {
 
 char *opd_str(uint16_t pc, uint16_t mode, uint16_t imm, char *buf, int jmp)
 {
+	uint16_t jmpaddr;
+	char *p;
+
 	buf[0] = '\0';
 
 	/* 067 pc relative +2 word */
@@ -162,10 +168,14 @@ char *opd_str(uint16_t pc, uint16_t mode, uint16_t imm, char *buf, int jmp)
 			sprintf(buf, "@#%o", imm);
 			break;
 		case 060:
-			if ((imm & 0100000) && jmp)
-				sprintf(buf, "%o", pc - (((~(imm & 077777)) & 077777) + 1) + 4);
-			else
-				sprintf(buf, "%o", pc + imm + 4);
+			if ((imm & 0100000) && jmp) {
+				jmpaddr = pc - (((~(imm & 077777)) & 077777) + 1) + 4;
+				if ((p=getsym(jmpaddr)) != "")
+					return p;
+			} else {
+				jmpaddr = pc + imm + 4;
+			}
+			sprintf(buf, "%o", jmpaddr);
 			break;
 		case 070:
 			sprintf(buf, "@%o", pc + imm + 4);
@@ -232,6 +242,24 @@ char *getsym(uint16_t addr)
 
 	return "";
 }
+
+char *getbroff(uint16_t ins, uint16_t pc, char *buf)
+{
+	uint16_t braddr;
+	char *p;
+
+	if (ins & 040) // ~ + 1 5bit offset 1bit sign
+		braddr = pc + 2 - 2* (((~(ins & 037)) & 037) + 1);
+	else
+		braddr = pc + 2 + 2*(ins & 077);
+
+	if ((p=getsym(braddr)) != "") {
+		return p;
+	}
+	sprintf(buf, "%o", braddr);
+	return buf;
+}
+
 void disa(void)
 {
 	struct insrtab *tab;
@@ -255,11 +283,13 @@ void disa(void)
 
 		/* BR */
 		if (tab->type & OP_BR) {
-			if (ins & 040) // ~ + 1
-				printf("%o", pc + 2 - 2* (((~(ins & 037)) & 037) + 1) );
-			else
-				printf("%o", pc + 2 + 2*(ins & 077));
+			printf("%s", getbroff(ins, pc, opdbuf));
 		}
+
+		if (tab->type & OP_SOB) {
+			printf("%s,%o", rname[(ins&0700)>>6], pc+2-(ins&077)*2);
+		}
+
 		if (tab->type & OP_JSR) {
 			printf("%s,", rname[(ins & 0700)>>6]);
 		}
