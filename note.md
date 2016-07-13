@@ -1,6 +1,5 @@
 
-chapter1
-========
+chapter1 ========
 * DR/SR 177570; 
 * e -v virtual address; d -a -c -m -o -d -h
 * tmrk copies blocks from tape to disk; ltap primary boot program;
@@ -105,6 +104,20 @@ Either mboot or tmrk first load to @0, then move itself to @137000 and run from
 137000, interesting.
 
 
+source
+=======
+# proc[]
+e 65574-65777
 
+# _savu
+br 2656
 
+# _sleep
+14520
 
+# swtch
+16030
+
+# p0 p1 u
+e -v 123200-123300
+e -v 125200-125300

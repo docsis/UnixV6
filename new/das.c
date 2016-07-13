@@ -128,12 +128,14 @@ int inslen(struct insrtab *tab, uint16_t ins)
 		if ((ins & 07000) == 06000 ||  (ins & 07000) == 07000)
 			len++;
 		/* pc */
-		if ((ins & 077) == 027)
+		if ((ins & 077) == 027 || (ins & 077) == 037) 
 			len++;
-		if ((ins & 07700) == 02700)
+		if ((ins & 07700) == 02700 || (ins & 07700) == 03700)
 			len++;
 	} else if (tab->type & OP_SGL) {
 		if ((ins & 070) == 060 ||  (ins & 070) == 070)
+			len++;
+		if ((ins & 077) == 027 || (ins & 077) == 037) 
 			len++;
 	}
 
@@ -168,8 +170,11 @@ char *opd_str(uint16_t pc, uint16_t mode, uint16_t imm, char *buf, int jmp)
 			sprintf(buf, "@#%o", imm);
 			break;
 		case 060:
-			if ((imm & 0100000) && jmp) {
-				jmpaddr = pc - (((~(imm & 077777)) & 077777) + 1) + 4;
+			if (jmp) {
+				if (imm & 0100000)
+					jmpaddr = pc - (((~(imm & 077777)) & 077777) + 1) + 4;
+				else
+					jmpaddr = pc + imm + 4;
 				if ((p=getsym(jmpaddr)) != "")
 					return p;
 			} else {
@@ -182,7 +187,7 @@ char *opd_str(uint16_t pc, uint16_t mode, uint16_t imm, char *buf, int jmp)
 			break;
 		}
 		return buf;
-	} 
+	}
 
 	switch (mode & 070) {
 	case 000:
@@ -213,7 +218,7 @@ char *opd_str(uint16_t pc, uint16_t mode, uint16_t imm, char *buf, int jmp)
 	return buf;
 }
 
-void loadfile(char *name) 
+void loadfile(char *name)
 {
 	FILE *f;
 
@@ -226,7 +231,7 @@ void loadfile(char *name)
 	// skip 16byte header
 	fread(fhead, 1, 16, f);
 	fread(fbuf, 1, sizeof(fbuf), f);
-	
+
 	fclose(f);
 }
 
@@ -310,7 +315,7 @@ void disa(void)
 
 }
 
-void loadsym(char *fname) 
+void loadsym(char *fname)
 {
 	FILE *f;
 	char line[128];
@@ -329,7 +334,7 @@ void loadsym(char *fname)
 		p->pname = strdup(&line[8]);
 		p++;
 	}
-	
+
 	fclose(f);
 }
 
