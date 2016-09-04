@@ -1,7 +1,7 @@
 import random
 import time
 
-maxnum = 5
+maxnum = 9
 times = 10 
 
 def log2file(s):
