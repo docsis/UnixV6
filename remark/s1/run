@@ -1,0 +1,15 @@
+#!/bin/bash
+
+dir=rootfs
+
+[ -d $dir ] || mkdir $dir
+[ -d $dir/bin ] || mkdir $dir/bin
+
+apps="echo chmod ln cp cmp comm"
+
+for file in $apps
+do
+	gcc ${file}.c -o $dir/bin/${file}
+done
+
+tree $dir
